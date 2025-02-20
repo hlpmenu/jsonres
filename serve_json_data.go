@@ -1,15 +1,15 @@
 package jsonres
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 
 	json "github.com/goccy/go-json"
 )
 
 var (
-	ErrNilObject     = fmt.Errorf("object is nil")
-	ErrMarshalFailed = fmt.Errorf("json marshal failed")
+	ErrNilObject     = errors.New("object is nil")
+	ErrMarshalFailed = errors.New("json marshal failed")
 )
 
 type JsonApiResponse struct {
@@ -68,6 +68,8 @@ func MarshalAndServe(obj interface{}, statuscode int, w http.ResponseWriter) err
 //
 // Use this when you need the response wrapped in the standard API response structure.
 // Returns error if marshalling fails.
+//
+//nolint:var-naming
 func MarshallApiResponse(status string, message string, obj interface{}, statuscode int, w http.ResponseWriter) error {
 	if obj == nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -75,9 +77,15 @@ func MarshallApiResponse(status string, message string, obj interface{}, statusc
 		w.Write([]byte(`{"status:"error","message":"internal server error", "error": "internal server error"}`))
 		return ErrNilObject
 	}
+	if status == "" {
+		status = "success"
+	}
+	if message == "" {
+		message = "success"
+	}
 	resObj := JsonApiResponse{
-		Status:  "success",
-		Message: "success",
+		Status:  status,
+		Message: message,
 		Data:    obj,
 	}
 	jsonb, err := json.Marshal(resObj)
